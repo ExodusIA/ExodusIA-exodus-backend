@@ -2,7 +2,6 @@ const axios = require('axios');
 
 const sendMessage = async (phoneNumber, message, instanceId) => {
   try {    
-    //http://64.23.164.208:5678/webhook/message
     const url = `${process.env.EVOLUTION_API_URL}/message/sendText/${instanceId}`;
     const payload = {
       number: phoneNumber,
