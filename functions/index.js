@@ -1,5 +1,5 @@
 const functions = require('firebase-functions');
-const main = require('./src/main');
+const { main } = require('./src/main');
 const dotenv = require('dotenv');
 const { resolve } = require('path');
 
