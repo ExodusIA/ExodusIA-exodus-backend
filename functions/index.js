@@ -3,6 +3,7 @@ const { main } = require('./src/main');
 const dotenv = require('dotenv');
 const { resolve } = require('path');
 const { sendMessage } = require('./src/services/messageService');
+const { registerClient } = require('./src/services/clientService');
 
 // Carregar variáveis de ambiente do arquivo .env
 dotenv.config({ path: resolve(__dirname, '.env') });
@@ -26,3 +27,6 @@ exports.sendMessage = functions.https.onRequest(async (req, res) => {
     res.status(500).send('Erro ao enviar mensagem.');
   }
 });
+
+// Função HTTP para registrar novos clientes
+exports.registerClient = functions.https.onRequest(registerClient);

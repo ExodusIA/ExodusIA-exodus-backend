@@ -51,8 +51,9 @@ const main = async () => {
         const queue = `queue-${instructorId}`; // Nome da fila específica do professor
         await ensureQueueExists(queue); // Verifica e cria a fila se necessário
         const delaySeconds = 45 * messageCount; // 45 segundos de atraso entre cada mensagem
+
         await createTask(phone, personalizedMessage, instructorData.instanceId, queue, delaySeconds, name, nickname);
-      
+        
         messageCount++; // Incrementa o contador de mensagens
       }
     }
