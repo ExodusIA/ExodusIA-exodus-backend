@@ -18,12 +18,20 @@ const listActiveClientsWithPrograms = async () => {
       for (const programDoc of programsSnapshot.docs) {
         const programData = programDoc.data();
 
-        const programId = programData.program.id; // Use a referência do programa
-        
+        // Verifique se programData.program está definido
+        if (!programData.program || !programData.program.id) {
+          console.error("Program data or program ID is missing for client:", clientDoc.id);
+          continue; // Pula esta iteração se o programId estiver indefinido
+        }
+      
+        const programId = programData.program.id;
         const lastTaskDay = await getProgramLastTaskDay(programId);
+        
+        const milliseconds = programData.startDate._seconds * 1000 + Math.floor(programData.startDate._nanoseconds / 1000000);
+        const date = new Date(milliseconds);
 
-        const currentDay = getCurrentDay(programData.startDate);
-       
+        const currentDay = getCurrentDay(date);
+        
         if (currentDay <= lastTaskDay) {
           programs.push({
             program: programDoc.ref,
@@ -50,9 +58,9 @@ const listActiveClientsWithPrograms = async () => {
 
 const registerClient = async (req, res) => {
   try {
-    const { name, email, phone, businessId, programId, startDate, instructorId, createdAt, groupId } = req.body;
+    const { name, email, phone, businessId, programId, startDate, instructorId, createdAt, groupId, nickname } = req.body;
 
-    console.log('Received data:', { name, email, phone, businessId, programId, startDate, instructorId, createdAt, groupId });
+    console.log('Received data:', { name, email, phone, businessId, programId, startDate, instructorId, createdAt, groupId, nickname });
 
     // Validação básica dos dados
     if (!name || !email || !phone || !businessId || !programId || !startDate || !instructorId) {
@@ -60,39 +68,40 @@ const registerClient = async (req, res) => {
       return res.status(400).send('Missing required fields: name, email, phone, businessId, programId, startDate, instructorId');
     }
 
-    // Extrair o primeiro nome para o apelido
-    const nickname = name.split(' ')[0];
-
     // Verificar se o cliente já existe
-    const existingClient = await db.collection('clients').where('email', '==', email).get();
-    if (!existingClient.empty) {
-      console.log('Client already registered with this email:', email);
-      return res.status(400).send('Client already registered with this email');
+    const existingClientQuery = await db.collection('clients').where('email', '==', email).get();
+    let clientRef;
+
+    if (!existingClientQuery.empty) {
+      // Cliente já existe, usar a referência existente
+      clientRef = existingClientQuery.docs[0].ref;
+      console.log('Client already registered, adding program:', email);
+    } else {
+      // Cliente não existe, adicionar um novo cliente
+      const businessRef = db.doc(`businesses/${businessId}`);
+      let groups = [];
+      if (groupId) {
+        const groupRef = db.doc(`groups/${groupId}`);
+        groups.push(groupRef);
+      }
+
+      clientRef = await db.collection('clients').add({
+        name,
+        email,
+        phone,
+        nickname, // Adicionar o campo 'nickname' ao registro do cliente
+        business: businessRef,
+        active: true,
+        createdAt: createdAt || admin.firestore.FieldValue.serverTimestamp(),
+        groups
+      });
+
+      console.log('Client registered successfully:', { name, email, phone, businessId });
     }
 
-    // Referência ao documento do negócio
-    const businessRef = db.doc(`businesses/${businessId}`);
+    // Referências ao programa e instrutor
     const programRef = db.doc(`programs/${programId}`);
     const instructorRef = db.doc(`instructors/${instructorId}`);
-
-    // Referência ao grupo, se fornecido
-    let groups = [];
-    if (groupId) {
-      const groupRef = db.doc(`groups/${groupId}`);
-      groups.push(groupRef);
-    }
-
-    // Adicionar cliente ao Firestore
-    const clientRef = await db.collection('clients').add({
-      name,
-      email,
-      phone,
-      nickname,
-      business: businessRef,
-      active: true,
-      createdAt: createdAt || admin.firestore.FieldValue.serverTimestamp(),
-      groups
-    });
 
     // Adicionar programa na subcoleção do cliente
     await clientRef.collection('programs').add({
@@ -101,10 +110,10 @@ const registerClient = async (req, res) => {
       startDate: admin.firestore.Timestamp.fromDate(new Date(startDate))
     });
 
-    console.log('Client registered successfully:', { name, email, phone, businessId, programId, startDate, instructorId, createdAt, groupId });
-    return res.status(201).send('Client registered successfully');
+    console.log('Program added successfully for client:', email);
+    return res.status(201).send('Client registered and program added successfully');
   } catch (error) {
-    console.error('Error registering client:', error);
+    console.error('Error registering client or adding program:', error);
     return res.status(500).send('Internal server error');
   }
 };

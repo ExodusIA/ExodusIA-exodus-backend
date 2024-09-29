@@ -21,7 +21,8 @@ const firebaseConfig = {
 // Inicializar Firebase Admin
 admin.initializeApp({
   credential: admin.credential.cert(firebaseConfig),
-  databaseURL: `https://${process.env.FIREBASE_PROJECT_ID}.firebaseio.com`
+  storageBucket: process.env.FIRE_STORAGE_BUCKET,
+  databaseURL: `https://${process.env.FIRE_PROJECT_ID}.firebaseio.com`
 });
 
 const db = admin.firestore();

@@ -1,3 +1,5 @@
+// chatgptService.js
+
 const OpenAI = require("openai");
 const dotenv = require('dotenv');
 const { resolve } = require('path');
@@ -8,36 +10,63 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
 });
 
-const createPersonalizedMessage = async (name, nickname, tasks, style) => {
-    const tasksDescriptions = tasks.map(task => `Task: ${task.taskName}\nDescription: ${task.taskDescription}`).join('\n\n');
+const createPersonalizedMessage = async (name, nickname, tasks) => {
+    const taskDescriptions = tasks.map(task => `${task.taskDescription}`).join('\n');
 
     let prompt;
+
     if (name.startsWith("Grupo:")) {
-        prompt = `Crie uma mensagem personalizada para o grupo ${name.replace("Grupo:", "").trim()}, chame-os pelo apelido "${nickname}", baseado em suas tarefas de hoje:\n\n${tasksDescriptions}\n\n
-        Considere que a mensagem será enviada para o WhatsApp. Use poucos ou nenhum emoji e insira links diretamente e somente os que eu lhe fornecer, 
-        utilize asteriscos para deixar somente os títulos em negrito, assim: *Exemplo de título*. Note que "${nickname}" é um apelido para todas as pessoas do grupo "${name.replace("Grupo:", "").trim()}".
-        `;
+        // Extract the group name
+        const groupName = name.replace("Grupo:", "").trim();
+
+        prompt = `Crie uma mensagem personalizada para o grupo ${groupName}, chamando-os por um dos apelidos: "${nickname}". Inclua as seguintes tarefas na mensagem:
+
+${taskDescriptions}
+
+A mensagem deve ser amigável, direta e curta, semelhante a este exemplo:
+
+"Bom dia pessoal, tudo bem?
+
+O treino de vocês hoje:
+Fazer X Polichinelo
+
+Depois me contem como foi, abraços"
+
+Certifique-se de manter o tom casual e pessoal, e adapte a saudação e despedida para um grupo.`;
     } else {
-        prompt = `Crie uma mensagem personalizada para ${name}, chame-o pelo seu apelido que é ${nickname}, baseado em suas tarefas de hoje:\n\n${tasksDescriptions}\n\n
-        Considere que a mensagem será enviada para o WhatsApp. Use poucos ou nenhum emoji e insira links diretamente e somente os que eu lhe fornecer, 
-        utilize asteriscos para deixar somente os títulos em negrito, assim: *Exemplo de título*.
-        `;
+        // Individual message
+        prompt = `Crie uma mensagem personalizada para ${name}, chame-o pelo seu apelido que é ${nickname}. Inclua as seguintes tarefas na mensagem:
+
+${taskDescriptions}
+
+A mensagem deve ser amigável, direta e curta, semelhante a este exemplo:
+
+"Bom dia ${nickname}, tudo bem?
+
+Seu treino de hoje:
+${taskDescriptions}
+
+Depois me conta como foi, beijos"
+
+Certifique-se de manter o tom casual e pessoal, e não inclua numeração ou divisões em partes.`;
     }
+
     try {
         const completion = await openai.chat.completions.create({
             model: "gpt-4o-mini",
             messages: [
-                { role: "system", content: style },
                 { role: "user", content: prompt }
             ],
         });
 
-        return completion.choices[0].message.content.trim();
+        const fullMessage = completion.choices[0].message.content.trim();
+        return fullMessage;
     } catch (error) {
         console.error("Error creating personalized message:", error);
         throw error;
     }
 };
+
 
 module.exports = {
     createPersonalizedMessage
