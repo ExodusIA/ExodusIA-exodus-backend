@@ -8,6 +8,7 @@ const { CloudTasksClient } = require('@google-cloud/tasks');
 const dotenv = require('dotenv');
 const { resolve } = require('path');
 const { format } = require('date-fns');
+const { sendMessage } = require('./services/messageService');
 
 dotenv.config({ path: resolve(__dirname, '../.env') });
 
@@ -23,6 +24,9 @@ const main = async () => {
     let messageCount = 0;
     for (const client of clients) {
       const { name, phone, programs, nickname } = client;
+      // if (nickname !== 'Alu') {
+      //   continue;
+      // }
       if (!programs || programs.length === 0) {
         console.log(`No active programs found for client ${name}`);
         continue;
@@ -57,28 +61,31 @@ const main = async () => {
       for (const time in tasksByTime) {
         const tasksAtTime = tasksByTime[time];
 
-        // Obter estilos dos instrutores envolvidos
+        // Obter estilos dos instrutores envolvidos e instanceId
         let instructorStyles = {};
+        let instructorInstanceIds = {};
         for (const { instructorId } of tasksAtTime) {
           if (!instructorStyles[instructorId]) {
             const instructorDoc = await db.doc(`instructors/${instructorId}`).get();
             const instructorData = instructorDoc.data();
             instructorStyles[instructorId] = instructorData.style || '';
+            instructorInstanceIds[instructorId] = instructorData.instanceId;
           }
         }
 
-        // Concatenar os estilos (pode ajustar conforme necessário)
-        const combinedStyle = Object.values(instructorStyles).join('\n');
-
-        // Extrair as tarefas
+        // Obter o estilo do instrutor específico aplicado à mensagem
         const tasks = tasksAtTime.map(item => item.task);
+        const instructorId = tasksAtTime[0].instructorId;
+        const instructorStyle = instructorStyles[instructorId];
+        const instanceId = instructorInstanceIds[instructorId];
 
         // Gerar mensagem única para todas as tarefas no mesmo horário
-        const messageParts = await createPersonalizedMessage(name, nickname, tasks, combinedStyle);
+        const message = await createPersonalizedMessage(name, nickname, tasks, instructorStyle);
 
         const [hours, minutes] = time.split(':').map(Number);
 
         let scheduledTime = new Date();
+        scheduledTime.setHours(scheduledTime.getHours() - 3); // Ajuste para o fuso horário de São Paulo
         scheduledTime.setHours(hours, minutes, 0, 0);
 
         let currentTimeInSaoPaulo = new Date();
@@ -87,36 +94,29 @@ const main = async () => {
         scheduledTime.setSeconds(scheduledTime.getSeconds() + globalOffset);
 
         if (scheduledTime > currentTimeInSaoPaulo) {
-          let cumulativeDelay = 0;
+          const delaySeconds = ((scheduledTime.getTime() - currentTimeInSaoPaulo.getTime()) / 1000);
 
-          for (const messagePart of messageParts) {
-            const delaySeconds = ((scheduledTime.getTime() - currentTimeInSaoPaulo.getTime()) / 1000) + cumulativeDelay;
+          if (delaySeconds > 0) {
+            // Usar o número de telefone para o nome da fila, sanitizado para remover caracteres não numéricos
+            //const sanitizedPhone = phone.replace(/\D/g, '');
+            
+            const queue = `queue-${instanceId}`;
+            await ensureQueueExists(queue);
 
-            if (delaySeconds > 0) {
-              // Usar o número de telefone para o nome da fila, sanitizado para remover caracteres não numéricos
-              const sanitizedPhone = phone.replace(/\D/g, '');
-              
-              const queue = `default-queue`;
-              await ensureQueueExists(queue);
+            await createTask(phone, message, instanceId, queue, delaySeconds, name, nickname);
+            console.log(`Mensagem agendada para ${nickname} às ${time}`);
+            await sendMessage('5511987997085', `Mensagem agendada para ${nickname} às ${time}`, 'nl3v0tdckb7zvsdixcryj');
 
-              // Usar o instanceId do primeiro instrutor (pode ajustar conforme necessário)
-              const instanceId = 'juromantini';
-
-              await createTask('11987997085', messagePart, instanceId, queue, delaySeconds, name, nickname);
-              //await createTask(phone, messagePart, instanceId, queue, delaySeconds, name, nickname);
-              console.log(`Parte da mensagem agendada para ${name} (${nickname}) às ${time} com atraso de ${cumulativeDelay} segundos`);
-
-              // Ajustar o atraso entre as mensagens conforme necessário (por exemplo, 10 segundos)
-              cumulativeDelay += 10;
-            } else {
-              console.log(`Erro inesperado ao agendar mensagem: delay negativo`);
-            }
+            // Ajustar o offset global para o próximo envio (por exemplo, 45 segundos)
+            globalOffset += 45;
+          } else {
+            console.log(`Erro inesperado ao agendar mensagem: delay negativo`);
           }
 
           messageCount++;
-          globalOffset += cumulativeDelay; // Incrementar o offset global para o próximo envio
         } else {
           console.log(`Horário de envio para ${name} (${nickname}) já passou: ${time}`);
+          await sendMessage('5511987997085', `Horário de envio para ${name} (${nickname}) já passou: ${time}`, 'nl3v0tdckb7zvsdixcryj');
         }
       }
     }
@@ -127,7 +127,13 @@ const main = async () => {
 
 async function createTask(phone, message, instanceId, queue, delaySeconds, name, nickname) {
   const url = `https://${location}-${project}.cloudfunctions.net/sendMessage`;
-  const payload = JSON.stringify({ phone, message, instanceId, name, nickname });
+  const payload = {
+    phone,
+    message,
+    instanceId,
+    name,
+    nickname,
+  };
 
   const [response] = await tasksClient.createTask({
     parent: tasksClient.queuePath(project, location, queue),
@@ -135,7 +141,7 @@ async function createTask(phone, message, instanceId, queue, delaySeconds, name,
       httpRequest: {
         httpMethod: 'POST',
         url,
-        body: Buffer.from(payload).toString('base64'),
+        body: Buffer.from(JSON.stringify(payload), 'utf-8').toString('base64'),
         headers: {
           'Content-Type': 'application/json',
         },
@@ -157,7 +163,6 @@ async function ensureQueueExists(queue) {
     // Tentar obter a fila
     await tasksClient.getQueue({ name: queuePath });
     // A fila existe, não precisa criar
-    // console.log(`Queue ${queue} already exists.`);
   } catch (error) {
     if (error.code === 5) {
       // Code 5 corresponde a NOT_FOUND
@@ -170,16 +175,12 @@ async function ensureQueueExists(queue) {
           },
         };
         await tasksClient.createQueue(request);
-        // console.log(`Queue ${queue} created.`);
       } catch (createError) {
         if (createError.code === 6) {
           // Code 6 corresponde a ALREADY_EXISTS
-          // A fila foi criada por outra instância paralela, podemos ignorar
         } else if (createError.code === 9) {
           // Code 9 corresponde a FAILED_PRECONDITION
-          // A fila foi deletada recentemente e não pode ser recriada imediatamente
           console.error(`Não foi possível criar a fila ${queue} porque ela foi deletada recentemente.`);
-          // Podemos optar por usar uma fila alternativa ou lançar um erro
           throw createError;
         } else {
           throw createError;

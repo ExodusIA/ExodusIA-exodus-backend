@@ -10,46 +10,23 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
 });
 
-const createPersonalizedMessage = async (name, nickname, tasks) => {
-    const taskDescriptions = tasks.map(task => `${task.taskDescription}`).join('\n');
+const createPersonalizedMessage = async (name, nickname, tasks, instructorStyle) => {
+    const taskDetails = tasks.map(task => task.taskDescription).join('\n');
 
-    let prompt;
+     // Obter a saudação apropriada com base na hora atual
+     const currentHour = new Date().getHours();
+     let greeting;
+ 
+     if (currentHour < 12) {
+         greeting = "Bom dia";
+     } else if (currentHour < 18) {
+         greeting = "Boa tarde";
+     } else {
+         greeting = "Boa noite";
+     }
 
-    if (name.startsWith("Grupo:")) {
-        // Extract the group name
-        const groupName = name.replace("Grupo:", "").trim();
-
-        prompt = `Crie uma mensagem personalizada para o grupo ${groupName}, chamando-os por um dos apelidos: "${nickname}". Inclua as seguintes tarefas na mensagem:
-
-${taskDescriptions}
-
-A mensagem deve ser amigável, direta e curta, semelhante a este exemplo:
-
-"Bom dia pessoal, tudo bem?
-
-O treino de vocês hoje:
-Fazer X Polichinelo
-
-Depois me contem como foi, abraços"
-
-Certifique-se de manter o tom casual e pessoal, e adapte a saudação e despedida para um grupo.`;
-    } else {
-        // Individual message
-        prompt = `Crie uma mensagem personalizada para ${name}, chame-o pelo seu apelido que é ${nickname}. Inclua as seguintes tarefas na mensagem:
-
-${taskDescriptions}
-
-A mensagem deve ser amigável, direta e curta, semelhante a este exemplo:
-
-"Bom dia ${nickname}, tudo bem?
-
-Seu treino de hoje:
-${taskDescriptions}
-
-Depois me conta como foi, beijos"
-
-Certifique-se de manter o tom casual e pessoal, e não inclua numeração ou divisões em partes.`;
-    }
+    // Prompt para adicionar o apelido apenas em algumas ocasiões
+    const prompt = `Inclua o apelido "${nickname}" (Caso tenha mais de um nessa listagem, escolha um deles), adicione uma saudação caso não tenha (Oi, Oie, ${greeting}) e corrija o que for necessário na mensagem a seguir: ${taskDetails} (concatene o que for necessário para fazer sentido)`;
 
     try {
         const completion = await openai.chat.completions.create({
@@ -66,7 +43,6 @@ Certifique-se de manter o tom casual e pessoal, e não inclua numeração ou div
         throw error;
     }
 };
-
 
 module.exports = {
     createPersonalizedMessage

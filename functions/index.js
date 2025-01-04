@@ -20,7 +20,12 @@ exports.dailyMessageScheduler = functions
     const start = Date.now();
     console.log('Scheduled function is running...');
     
-    //await main();
+    await sendMessage('5511987997085', 'Felippe, os agendamentos dos disparos estão se iniciando agora...', 'nl3v0tdckb7zvsdixcryj');
+
+    await main();
+
+    await sendMessage('5511987997085', 'Felippe, os agendamentos dos disparos foram encerrados...', 'nl3v0tdckb7zvsdixcryj');
+
     
     const end = Date.now();
     const executionTime = (end - start) / 1000;
@@ -32,6 +37,7 @@ exports.dailyMessageScheduler = functions
 exports.sendMessage = functions.https.onRequest(async (req, res) => {
   const { phone, message, instanceId, name, nickname } = req.body;
   try {
+    console.log(phone.toString(), message, instanceId);
     await sendMessage(phone.toString(), message, instanceId);
     console.log(`Message sent to ${name} (${nickname}) at ${phone}`);
     res.status(200).send('Mensagem enviada.');
