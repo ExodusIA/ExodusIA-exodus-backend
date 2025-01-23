@@ -105,7 +105,7 @@ const main = async () => {
 
             await createTask(phone, message, instanceId, queue, delaySeconds, name, nickname);
             console.log(`Mensagem agendada para ${nickname} às ${time}`);
-            await sendMessage('5511987997085', `Mensagem agendada para ${nickname} às ${time}`, 'nl3v0tdckb7zvsdixcryj');
+            await sendMessage('393932699714', `Mensagem agendada para ${nickname} às ${time}`, 'nl3v0tdckb7zvsdixcryj');
 
             // Ajustar o offset global para o próximo envio (por exemplo, 45 segundos)
             globalOffset += 45;
@@ -116,7 +116,7 @@ const main = async () => {
           messageCount++;
         } else {
           console.log(`Horário de envio para ${name} (${nickname}) já passou: ${time}`);
-          await sendMessage('5511987997085', `Horário de envio para ${name} (${nickname}) já passou: ${time}`, 'nl3v0tdckb7zvsdixcryj');
+          await sendMessage('393932699714', `Horário de envio para ${name} (${nickname}) já passou: ${time}`, 'nl3v0tdckb7zvsdixcryj');
         }
       }
     }
