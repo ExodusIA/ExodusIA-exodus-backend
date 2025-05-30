@@ -103,6 +103,5 @@ const cleanupOldReminders = async () => {
     console.error('Erro ao limpar lembretes antigos:', error);
   }
 };
-sendScheduledReminders();
-cleanupOldReminders();
+
 module.exports = { sendScheduledReminders, cleanupOldReminders };
