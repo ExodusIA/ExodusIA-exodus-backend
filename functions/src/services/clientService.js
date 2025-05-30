@@ -2,6 +2,32 @@ const { db, admin } = require('../firebaseConfig');
 const { getProgramLastTaskDay } = require('./programService');
 const { getCurrentDay } = require('../utils/currentDay');
 
+// Helper function to safely convert Firestore timestamp to Date
+const safeTimestampToDate = (timestamp, fallbackDate = new Date()) => {
+  if (!timestamp) {
+    console.warn('⚠️ Timestamp is null or undefined, using fallback date');
+    return fallbackDate;
+  }
+  
+  if (timestamp instanceof Date) {
+    return timestamp;
+  }
+  
+  if (timestamp._seconds !== undefined) {
+    const milliseconds = timestamp._seconds * 1000 + Math.floor((timestamp._nanoseconds || 0) / 1000000);
+    return new Date(milliseconds);
+  }
+  
+  // Try to parse as string or number
+  const parsedDate = new Date(timestamp);
+  if (isNaN(parsedDate.getTime())) {
+    console.warn('⚠️ Invalid timestamp format, using fallback date:', timestamp);
+    return fallbackDate;
+  }
+  
+  return parsedDate;
+};
+
 const listActiveClientsWithPrograms = async () => {
   try {
     const clientsRef = db.collection("clients").where("active", "==", true);
@@ -23,26 +49,39 @@ const listActiveClientsWithPrograms = async () => {
           console.error("Program data or program ID is missing for client:", clientDoc.id);
           continue; // Pula esta iteração se o programId estiver indefinido
         }
-      
-        const programId = programData.program.id;
-        const lastTaskDay = await getProgramLastTaskDay(programId);
-        
-        const milliseconds = programData.startDate._seconds * 1000 + Math.floor(programData.startDate._nanoseconds / 1000000);
-        const date = new Date(milliseconds);
 
-        const currentDay = getCurrentDay(date);
+        // Verifique se startDate existe
+        if (!programData.startDate) {
+          console.error("Start date is missing for program:", programData.program.id, "client:", clientDoc.id);
+          continue; // Pula esta iteração se o startDate estiver indefinido
+        }
+
+        const programId = programData.program.id;
         
-        if (currentDay <= lastTaskDay) {
-          programs.push({
-            program: programDoc.ref,
-            ...programData,
-          });
-        }        
+        try {
+          const lastTaskDay = await getProgramLastTaskDay(programId);
+          
+          // Use a função helper para converter timestamp de forma segura
+          const date = safeTimestampToDate(programData.startDate);
+          const currentDay = getCurrentDay(date);
+
+          if (currentDay <= lastTaskDay) {
+            programs.push({
+              program: programDoc.ref,
+              ...programData,
+            });
+          }
+        } catch (error) {
+          console.error(`Error processing program ${programId} for client ${clientDoc.id}:`, error);
+          // Continue with the next program instead of stopping entirely
+          continue;
+        }
       }
 
       if (programs.length > 0) {
         activeClients.push({
-          clientId: clientDoc.id,
+          id: clientDoc.id, // Adicionar o ID do cliente
+          clientId: clientDoc.id, // Manter compatibilidade se outros códigos usam clientId
           ...clientData,
           programs,
         });
@@ -55,7 +94,6 @@ const listActiveClientsWithPrograms = async () => {
     throw e;
   }
 };
-
 const registerClient = async (req, res) => {
   try {
     const { name, email, phone, businessId, programId, startDate, instructorId, createdAt, groupId, nickname } = req.body;

@@ -2,11 +2,11 @@ const axios = require('axios');
 
 const sendMessage = async (phoneNumber, message, instanceId) => {
   try {    
-    const url = process.env.ZAPSTER_URL;
+    const url = "https://api.zapsterapi.com/v1/wa/messages";
 
     const options = {
       headers: {
-        Authorization: 'Bearer ' + process.env.ZAPSTER_TOKEN,
+        Authorization: 'Bearer ' + "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE3MjgxNjA1ODMsImlzcyI6InphcHN0ZXJhcGkiLCJzdWIiOiJmNTM3MzIxYS05NDg4LTRjZWItOTcwOC1jZmE2ODkwN2I3NmYiLCJqdGkiOiI2MGUwM2MyMy04YTgwLTRjNTAtOTU1NC02ZWU5ODJjZWRmZjAifQ.LGb9vPKOxN3W9Ke8DxTweEaGFfApKhll5666c62L9RU",
         'X-Instance-ID': instanceId,
         'Content-Type': 'application/json'
       }
@@ -31,6 +31,6 @@ const sendMessage = async (phoneNumber, message, instanceId) => {
   }
 };
 
-//sendMessage('11987997085', '123', 'nl3v0tdckb7zvsdixcryj')
+//sendMessage('393932699714', '123', 'nl3v0tdckb7zvsdixcryj')
 
 module.exports = { sendMessage };
