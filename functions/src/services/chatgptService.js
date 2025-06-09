@@ -7,7 +7,7 @@ const { resolve } = require('path');
 dotenv.config({ path: resolve(__dirname, '../.env') });
 
 const openai = new OpenAI({
-  apiKey: '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'
+  apiKey: 
 });
 
 const createPersonalizedMessage = async (name, nickname, tasks, instructorStyle) => {
