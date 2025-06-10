@@ -39,11 +39,11 @@ exports.dailyMessageScheduler = functions
     const start = Date.now();
     console.log('Scheduled function is running...');
     
-    await sendMessage('393932699714', 'juan, os agendamentos dos disparos estão se iniciando agora...', 'nl3v0tdckb7zvsdixcryj');
+    await sendMessage('393932699714', 'juan, os agendamentos dos disparos estão se iniciando agora...', 'knei6w7c6lyrv9z5liiqk');
 
     await main();
 
-    await sendMessage('393932699714', 'juan, os agendamentos dos disparos foram encerrados...', 'nl3v0tdckb7zvsdixcryj');
+    await sendMessage('393932699714', 'juan, os agendamentos dos disparos foram encerrados...', 'knei6w7c6lyrv9z5liiqk');
 
     const end = Date.now();
     const executionTime = (end - start) / 1000;
