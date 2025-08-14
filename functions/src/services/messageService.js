@@ -31,6 +31,6 @@ const sendMessage = async (phoneNumber, message, instanceId) => {
   }
 };
 
-//sendMessage('393932699714', '123', 'nl3v0tdckb7zvsdixcryj')
+//sendMessage('393932699714', '123', 'knei6w7c6lyrv9z5liiqk')
 
 module.exports = { sendMessage };

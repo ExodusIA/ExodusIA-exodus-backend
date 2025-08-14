@@ -1,24 +1,168 @@
 const { db } = require('../firebaseConfig'); // Importa a configuração do Firebase Admin
 
-async function findClientsByEmails() {
+async function findClientsAndAssignTurma() {
   try {
-    const emailList = [
-      "lumameinerz@hotmail.com", "thalitaoliveiramkt@gmail.com", "maisainfante@yahoo.com.br", "thais_borges@hotmail.com", "efeitodapratica@gmail.com", "endrigomonsanto@yahoo.com.br", "liliane.frts@yahoo.com.br", "mauricio@ragazzi.adv.br", "you@spaak.com.br", "makinas77@hotmail.com", "raquel.caram@uol.com.br", "luisfsberrettini@gmail.com", "daniluque2020@hotmail.com", "drmeinerz@gmail.com", "luciliamachado.lsm@gmail.com", "daisygm.rep@gmail.com", "fernando@ercoli.com.br", "pri_smizato@hotmail.com", "katyrpmelito@hotmail.com", "mauraprado1960@gmail.com", "cinthia.catellan@gmail.com", "renata_mottaluchesi@outlook.com", "hiroki.uehara@hotmail.com", "franklin@perolatapetes.com.br", "amorimluciana7@hotmail.com", "mfsantos.santos01@gmail.com", "julilui23@gmail.com", "andreiamazloum@gmail.com", "thaysemfreitas@gmail.com", "liciliamachado.lam@gmail.com", "danieletrigo@gmail.com", "carol-vet@uol.com.br", "felpsrdz@gmail.com", "Biafurlan@yahoo.com.br", "edinhorx@hotmail.com", "gisposito@hotmail.com", "beatrizcromantini@gmail.com", "yyfattah@gmail.com", "sandra.pinheiro1@yahoo.com.br", "rtalaia@outlook.com", "rosane.po90@gmail.com", "marcia.cherbino@gmail.com", "luzfatima@gmail.com.br", "lucianameinerz@gmail.com", "mayumadepaula@gmail.com", "lilianeapgmf@gmail.com", "daniluqueluque@gmail.com", "renata.d.shirai@gmail.com", "maisainfante@gmail.com", "isabella.uglik@gmail.com", "contato@denisefurlan.com.br", "edinhorx@gmail.com", "crleal.ac@gmail.com", "katyrpmelito@gmail.com", "luzfatima@gmail.com", "marcelscarneiro@gmail.com", "fabiohiro@gmail.com", "giovanaromantini@gmail.com", "ptgc.civolani@gmail.com", "flaviaortiz@aasp.org.br", "alewatanabe88@gmail.com", "nubia.boito@uol.com.br", "marianamarcolino@gmail.com", "cassavia@gmail.com", "rimsaragazzi@gmail.com", "kiara.ayza.sofia@gmail.com", "pri.uehara07@gmail.com", "jackoliveiraoficial@gmail.com", "mauriciocresostomo@gmail.com", "ritaccatellan1@gmail.com", "karomantini@gmail.com", "luma.cromantini@gmail.com", "lahamsimone@gmail.com", "mellojorgeclaudiode@gmail.com", "renata.motta1@gmail.com", "ireaugusto13@gmail.com", "cristinalainec@gmail.com"
+    // Lista de clientes com seus dias de treino
+    const clientList = [
+      { name: "Ailton Wang", day: "TERÇA" },
+      { name: "Alessandra Dias Watanabe", day: "SEGUNDA" },
+      { name: "Ana Carolina Leal", day: "TERÇA" },
+      { name: "Ana Cristina Machado", day: "ONLINE" },
+      { name: "Andreia Mohamad Mazloum", day: "TERÇA" },
+      { name: "Beatriz Cury Romantini", day: "SEGUNDA" },
+      { name: "Beatriz Furlan", day: "TERÇA" },
+      { name: "Benita Terezinha Galeti Romantini", day: "TERÇA" },
+      { name: "Cinthia Catellan", day: "TERÇA" },
+      { name: "Daisy Gomes Medeiros", day: "TERÇA" },
+      { name: "Daniela Luque de Souza Oliveira", day: "TERÇA" },
+      { name: "Daniele Trigo", day: "TERÇA" },
+      { name: "Edison Augusto de Oliveira", day: "TERÇA" },
+      { name: "Elaine Cristina Figueiredo Cardoso Campanelli", day: "ONLINE" },
+      { name: "Ellen Dutra", day: "TERÇA" },
+      { name: "Fátima Luz", day: "TERÇA" },
+      { name: "Flavia Ortiz Rodrigues Garcia", day: "TERÇA" },
+      { name: "Franklin Delgado", day: "TERÇA" },
+      { name: "Giovana Sganzela Romantini", day: "SEGUNDA" },
+      { name: "Guile Amadeu", day: "TERÇA" },
+      { name: "Irene de Fátima Augusto Oliveira", day: "TERÇA" },
+      { name: "Isabella Uglik Galvez", day: "SEGUNDA" },
+      { name: "Jackson Hiroki Teruya Uehara", day: "SEGUNDA" },
+      { name: "Jaqueline J M de Oliveira", day: "TERÇA" },
+      { name: "Jose Roberto Mayer", day: "TERÇA" },
+      { name: "Jorge Claudio de Mello", day: "TERÇA" },
+      { name: "Juliana Romantini", day: "TERÇA" },
+      { name: "Katia R Cury Romantini", day: "ONLINE" },
+      { name: "Katy Ramos Pinho Melito", day: "TERÇA" },
+      { name: "Liliane Aparecida Gonçalves Medeiros de Freitas", day: "SEGUNDA" },
+      { name: "Luciana Cristina de Amorim", day: "TERÇA" },
+      { name: "Luciana Meinerz", day: "SEGUNDA" },
+      { name: "Lucilia da Silva Machado", day: "TERÇA" },
+      { name: "Luma Cury Romantini", day: "ONLINE" },
+      { name: "Lurdes Romantini", day: "TERÇA" },
+      { name: "Madalena Almeida", day: "SEGUNDA" },
+      { name: "Maisa Infante", day: "SEGUNDA" },
+      { name: "Márcia Cristina de Magalhães Cherbino", day: "TERÇA" },
+      { name: "Márcia Cristina Sorvilo Moreno", day: "TERÇA" },
+      { name: "Mariana Marcolino", day: "TERÇA" },
+      { name: "Maura Prado de Oliveira", day: "TERÇA" },
+      { name: "Mauricio Aparecido Cresostomo", day: "TERÇA" },
+      { name: "Mauricio Fernandes dos Santos", day: "TERÇA" },
+      { name: "Núbia M O Boito", day: "SEGUNDA" },
+      { name: "Paula Civolani", day: "ONLINE" },
+      { name: "Priscila Smizato Uehara", day: "TERÇA" },
+      { name: "Rafael Vaz de Lima", day: "SEGUNDA" },
+      { name: "Raquel Caram Teixeira", day: "SEGUNDA" },
+      { name: "Reginaldo Gonzalez", day: "TERÇA" },
+      { name: "Renata Motta Luchesi", day: "TERÇA" },
+      { name: "Rita De Cassia Costa Catellan", day: "TERÇA" },
+      { name: "Rosane Prado de Oliveira", day: "TERÇA" },
+      { name: "Thais de Oliveira Borges", day: "TERÇA" },
+      { name: "Thais Guimarães Pimentel", day: "TERÇA" },
+      { name: "Vera Lucia Milan Aznar", day: "TERÇA" },
+      { name: "Veronica Cassavia", day: "TERÇA" }
     ];
-    
+
     const clientsRef = db.collection("clients");
     
-    for (const email of emailList) {
-      const querySnapshot = await clientsRef.where("email", "==", email).get();
+    // Buscar todos os clientes do banco
+    const allClientsSnapshot = await clientsRef.get();
+    
+    let foundClients = [];
+    let updatedClients = [];
+
+    // Iterar através de todos os clientes do banco
+    allClientsSnapshot.forEach(doc => {
+      const clientData = doc.data();
+      const clientName = clientData.name;
       
-      querySnapshot.forEach(doc => {
-        const clientData = doc.data();
-        console.log(`Cliente encontrado: ID=${doc.id}, Nome=${clientData.name}, Email=${clientData.email}`);
+      // Procurar por correspondência de nome na lista
+      const matchedClient = clientList.find(listClient => {
+        // Comparação exata primeiro
+        if (listClient.name.toLowerCase() === clientName.toLowerCase()) {
+          return true;
+        }
+        
+        // Comparação parcial - verifica se o nome do banco contém palavras-chave do nome da lista
+        const listNameWords = listClient.name.toLowerCase().split(' ');
+        const clientNameLower = clientName.toLowerCase();
+        
+        // Verifica se pelo menos 2 palavras principais coincidem
+        const matchingWords = listNameWords.filter(word => 
+          word.length > 2 && clientNameLower.includes(word)
+        );
+        
+        return matchingWords.length >= 2;
+      });
+
+      if (matchedClient) {
+        foundClients.push({
+          id: doc.id,
+          name: clientName,
+          email: clientData.email,
+          matchedWith: matchedClient.name,
+          day: matchedClient.day
+        });
+      }
+    });
+
+    console.log(`\nEncontrados ${foundClients.length} clientes correspondentes:\n`);
+
+    // Processar cada cliente encontrado
+    for (const client of foundClients) {
+      let turma;
+      
+      // Determinar a turma baseada no dia
+      if (client.day === "SEGUNDA") {
+        turma = 1;
+      } else if (client.day === "TERÇA") {
+        turma = 2;
+      } else if (client.day === "ONLINE") {
+        turma = 3; // Assumindo turma 3 para treino online
+      } else {
+        turma = null; // Caso não identificado
+      }
+
+      console.log(`Cliente: ${client.name}`);
+      console.log(`  ID: ${client.id}`);
+      console.log(`  Email: ${client.email}`);
+      console.log(`  Corresponde a: ${client.matchedWith}`);
+      console.log(`  Dia de treino: ${client.day}`);
+      console.log(`  Turma atribuída: ${turma}`);
+      console.log('---');
+
+      // Atualizar o documento do cliente com a turma
+      if (turma !== null) {
+        try {
+          await clientsRef.doc(client.id).update({
+            turma: turma
+          });
+          
+          updatedClients.push({
+            name: client.name,
+            turma: turma
+          });
+          
+          console.log(`✅ Cliente ${client.name} atualizado com turma ${turma}`);
+        } catch (updateError) {
+          console.error(`❌ Erro ao atualizar cliente ${client.name}:`, updateError);
+        }
+      }
+    }
+
+    console.log(`\n📊 Resumo:`);
+    console.log(`Clientes encontrados: ${foundClients.length}`);
+    console.log(`Clientes atualizados: ${updatedClients.length}`);
+    
+    if (updatedClients.length > 0) {
+      console.log(`\n📝 Clientes atualizados:`);
+      updatedClients.forEach(client => {
+        console.log(`  ${client.name} - Turma ${client.turma}`);
       });
     }
+
   } catch (error) {
-    console.error("Erro ao buscar os clientes:", error);
+    console.error("Erro ao buscar e atualizar os clientes:", error);
   }
 }
 
-findClientsByEmails().catch(console.error);
+findClientsAndAssignTurma().catch(console.error);

@@ -229,13 +229,13 @@ const main = async () => {
                 await createTask(phone, goalMessage, instanceId, queue, delaySeconds, name, nickname);
                 console.log(`✅ Mensagem de meta agendada para ${nickname} às ${goalTime}`);
 
-                await sendMessage('393932699714', `📢 Mensagem de meta agendada para ${nickname} às ${goalTime}`, 'nl3v0tdckb7zvsdixcryj');
+                await sendMessage('393932699714', `📢 Mensagem de meta agendada para ${nickname} às ${goalTime}`, 'knei6w7c6lyrv9z5liiqk');
 
                 globalOffset += 45;
                 messageCount++;
               } else {
                 console.log(`❌ Horário de envio de meta já passou para ${nickname} (${goalTime})`);
-                await sendMessage('393932699714', `⚠️ Horário de envio de meta já passou para ${nickname} (${goalTime})`, 'nl3v0tdckb7zvsdixcryj');
+                await sendMessage('393932699714', `⚠️ Horário de envio de meta já passou para ${nickname} (${goalTime})`, 'knei6w7c6lyrv9z5liiqk');
               }
             } catch (error) {
               console.error(`❌ Erro ao processar instrutor ${instructorId}:`, error);
@@ -305,12 +305,12 @@ const main = async () => {
           await createTask(phone, taskDetails, instanceId, queue, delaySeconds, name, nickname);
           console.log(`✅ Mensagem agendada para ${nickname} às ${time}`);
 
-          await sendMessage('393932699714', `📢 Mensagem agendada para ${nickname} às ${time}`, 'nl3v0tdckb7zvsdixcryj');
+          await sendMessage('393932699714', `📢 Mensagem agendada para ${nickname} às ${time}`, 'knei6w7c6lyrv9z5liiqk');
 
           globalOffset += 45;
         } else {
           console.log(`❌ Horário de envio já passou para ${nickname} (${time})`);
-          await sendMessage('393932699714', `⚠️ Horário de envio já passou para ${nickname} (${time})`, 'nl3v0tdckb7zvsdixcryj');
+          await sendMessage('393932699714', `⚠️ Horário de envio já passou para ${nickname} (${time})`, 'knei6w7c6lyrv9z5liiqk');
         }
         messageCount++;
       }
@@ -326,7 +326,7 @@ async function createTask(phone, message, instanceId, queue, delaySeconds, name,
   try {
     const url = `https://${location}-${project}.cloudfunctions.net/sendMessage`;
     const payload = { phone, message, instanceId, name, nickname };
-
+    console.log(payload);
     console.log(`📤 Criando tarefa no Cloud Tasks para ${nickname}...`);
     const [response] = await tasksClient.createTask({
       parent: tasksClient.queuePath(project, location, queue),
@@ -366,5 +366,4 @@ async function ensureQueueExists(queue) {
     }
   }
 }
-
 module.exports = { main };

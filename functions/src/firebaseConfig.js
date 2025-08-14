@@ -2,32 +2,43 @@ const admin = require('firebase-admin');
 const dotenv = require('dotenv');
 const { resolve } = require('path');
 
-
 // Carregar variáveis de ambiente do arquivo .env
 dotenv.config({ path: resolve(__dirname, '../../.env') });
 
+
+
+// Construir as credenciais a partir das variáveis de ambiente
 const firebaseConfig = {
-  type: "service_account",
-  project_id: "exodus-c5202",
-  private_key_id: "3f3d3bc4168f0cc890ee70121e5eb8f9e444c17d",
-  private_key: "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQC1UuLTVInaoNWh\nlnPeMQ6t6yoQqVIw6GMdxn7rG7oLVc71HMAMg2wJUVo+ufDL/FEY7BxgtxCIOMq7\nZ+REx8qqvYyhmpzhkSJAgL0yHTY6jQEiQSZqP5ff5b3iFftR/P5zz9R5T3kjJwjt\nr5Oxa//xKbGknrK7R9CeEHKxe8uWxbWFmlyWi+CaaShTylKU5n7Yhr8oNpQs8VKV\nEyQ0MW5/5JSUfRpuAPR2frFrTRaj88unwh8Vgy0sqZ88X11dHpFw6+W2+ptLh330\nzGDWt5OVz1Ug+JVZMYCxHIlIVxYDfzn0p0IRFcIW9W3fOJZvgnnUBxelHV9H19Q0\noga3WNBpAgMBAAECggEACxPqM4mRFi2TJ65gBqreGqOI/CAaxfioojd6kRAZAhtx\ntllq5UjRMfze+SvrKXc77XxysQ5LdlsWjbOyRz535A21Dg7QDLA31L4uG5Cb0SDE\nuTbxlcur/Rvq3tQYzjXum3I5fljWjd59uzxpwaJCGSsthSEZ9SWqeexc1CQ7+F/M\n1n0QcdvDN4JPPXbjiztEd9Bg5zBlsDV81I8iv+lC/0YXbao1CfzJOKngCC96eoXL\n/23/J3TcxK7dJCjTWqUjh/rJbeEpgAqUOfPLMWLE4w5PQGynv3k9E8UeqLr8ONUU\nioYDtXxasFjqFcPV/AeBGlsXuaRLb5WIcaSKCgcoNQKBgQDzBk+m3RAsAu1odZXs\nPSq47E8ksXQcwM2nFnVqAOY0AWAhw5sml59bUgVoAm926HgxMApbH0v8zkUznbVf\nZgr8SQrer6qUDNtM0MvWWD61ReSd7nQuwLlYw92qKp0mL5lFvjGnfqAXo+FUNr69\nOhCvFi1OJjlNWg0hjPGxJCbLXQKBgQC/AT19X76W/MIv7scM4Zrwbjjuo3Q4ZQlP\nJ8Ueoz9dAeno2A5nD70re38/QBgkj+3ebeSk6D0nGEreCMUvlnexJxzc2elFygpZ\na0/1Ozp5hqwIL4tzEjT/RHAyzcNshcuerd6chwryzvXqWrIj2ogU6EK8MptjuoFd\nfsO+XpFUfQKBgQCC5GlONE6bhdAcrQhcvu0dwJk36CPjwKyDTANdXrKeXAdM6C/O\nb2ezJdAnnvguETN7Oqa5QXgJ54c6L70abrmH/EdQfUjgiLQtAWBoSAsuU0C5F0+Y\nRtENUCE5n84YXRaui6vuzLKpSOj6FKpS/M0zoDwylT/Tu6bK5UDf6drDOQKBgQCB\nM2qPozM92O3WFJOKkBUJa9WQ/vn/p8CbTZCWP+D9nezGt1dOuaPBhQE3HLj4Cm/h\n1L4kGoA7MMB73rzbitGeAJIShki4D4neoKtue8j7KXC2/Mo8ZWV6AqZOh0cY4oww\n4vXBNcvfIMXR59W2UP1Z/x4dRbI8zIzzXGs2G6v81QKBgGNOmJKzSMB+MdHws6ji\nIB3urfEM/EqLRuXStcwwzlW73q6KNGSjzq3WDq/a2MmMeHAyNYnkr34tKM8ifjY5\ncXkvf8ON8kOPMd4wsI2nFxOQmjl/N1RcG0xeI3tnnXMbezrA5zkT0WcLWjVMDwHS\nxj5YteOZRMYyU969BGwaeYeP\n-----END PRIVATE KEY-----\n".replace(/\\n/g, '\n'),
-  client_email: "exodus-c5202@appspot.gserviceaccount.com",
-  client_id: "105468369505550551592",
-  auth_uri: "https://accounts.google.com/o/oauth2/auth",
-  token_uri: "https://oauth2.googleapis.com/token",
-  auth_provider_x509_cert_url: "https://www.googleapis.com/oauth2/v1/certs",
-  client_x509_cert_url: "https://www.googleapis.com/robot/v1/metadata/x509/exodus-c5202%40appspot.gserviceaccount.com"
+  type: process.env.FIREBASE_TYPE || "service_account",
+  project_id: process.env.FIREBASE_PROJECT_ID || "exodus-c5202",
+  private_key_id: process.env.FIREBASE_PRIVATE_KEY_ID || "1155b17a4506b9f35d6285ea99ef5e255a8f5127",
+  private_key: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n') || "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQCbLf1oQGLw17Gc\nlYp5DhYgPruoWarDnGYjKoruC1Dgb9iVTo6qY2N6Uj/oa6LU19HHhgshcUm//412\nViFHZF5w1DkaXEjbj6k8bCmhCpgKYtBWsGzJFDF0o6ev/R5xbPHluv+JSO6kwWm2\nhKNQ7xh4TpyZPmcsM5zeuNBMtxsCbidlJ/Soh+0ExbZs54ZfMG3X9obYbTGR8+5c\nkKXJChbmFoU8eKFVhJ8nXKDwt/KDqLtVgGqIEKr60meMHqupa4pZXu/dEfEXIedr\nDHsnCDtwv7lSSbnnMPdAEY7E8MLAaN+fLpxRk5AGvM1cJSgV2YAEtF64E3jpP71B\nE+LIMTUpAgMBAAECggEAC3DewTFsugSvunOHXo53JiXJ5csanR+/o1xvGsbTIyuh\nLxI4JYAnZOzXJmEig7PCaoX2Sx8USLy5fB3fMpQdUbnr2Ibbnkh0ue41kYMmRi8W\nh4BWvOp+t51F7zfnvIVuPjmaaSTrPKgVOFjbcPZNJQ2SsR+vMUyVhmbfgKXIBCvn\nxzuwVSokqo1+JysYgnfj6w2ES9YYLJJw/fVSFf8AgSzGnGp76YUf0IHihFFbFPdo\ndricsPEYewEMbZs5Opc6OAvO7YaAJAcNiCPnV+0yJ+RtcBgFFAOsBBNa+J2SyJ12\nw5kulh3aXpc8JVJsxr+lsUAyUVOYEM/jtl1u9+3PcwKBgQDWOOcCdBb6sQD/btkf\nIbZy7fOYTuXKucS7VM4gQMuo1Otbjim3p7roIGf3CPVehDOPSrcZZWQ4pEqiQKzC\n9VmqXZkooXl8UBg2B8Wwj3WGPeihEr9+mtbs5mUpzeGjJoia0pv0AGcvFhvjvAUu\nuZ75fk/uqBgdy4/FcYW0Y9wdPwKBgQC5cV7TDyksf/bwjHwuaeFzekIe6uOZP3v3\ngGafPzrl1Q32o+jwwrR+4IG6FJ/38u2Rg25ehPUmnNg+uuAqE0fdY/pR8IYdmByx\nUNVZWiWxbGIOx+014imhh6+tQrA/NmXsEZWxtJ+rDAqLzN1KgrcZGJxbSI/8H9Ff\nMQsWEBXLlwKBgAihIi0nIAXZO4EOphBq+z6F91obU4ZnFVW2hNcnxQx4B0MY5vVO\n/Gh9ZbK92aSFDs6m49lSDEd71sXSdSMlXwdN3e2VE5++WjtS9NO387QEqmpSpwQi\nmKXSYiDc+knoM3iJI18g5QcwjM8Ps+W99Hl4bR/gBZitqoz5lbk+jI9hAoGBAJpU\n3cPtZCjivpLneBnwiG7gmtK8TXqmuPb8Z2u05cGNFLflJeHpSOom0hAZRiDGjiyC\nI4KKSLQ/6EAcqp6ZuT9pC1TSReuvQoHXcheQzLniJ6GBhctIU7lZAT3CuIeDMEPN\nRrXESvXBaa17a9es/dDnCIl31EzR9h+w4zcTX/A1AoGBAKn7OOpQ2EQeHELA2KBb\n4OU7FAnqm/C/l5PqCogBYy8vrIZX0+72Id/dZ5kSfKFNksdhbiBm6BYOG/1ZVQP1\n8Xv4mSAoQmzpbxycv0xDzjOWGI4zFpy+vPi3pEhTHR5jsMoMMbt+a5M0odEjgp2+\nPKQCVaEDzIDD/2UYb2Zc7+Zh\n-----END PRIVATE KEY-----\n",
+  client_email: process.env.FIREBASE_CLIENT_EMAIL || "firebase-adminsdk-t6bfk@exodus-c5202.iam.gserviceaccount.com",
+  client_id: process.env.FIREBASE_CLIENT_ID || "108946198949506776804",
+  auth_uri: process.env.FIREBASE_AUTH_URI || "https://accounts.google.com/o/oauth2/auth",
+  token_uri: process.env.FIREBASE_TOKEN_URI || "https://oauth2.googleapis.com/token",
+  auth_provider_x509_cert_url: process.env.FIREBASE_AUTH_PROVIDER_X509_CERT_URL || "https://www.googleapis.com/oauth2/v1/certs",
+  client_x509_cert_url: process.env.FIREBASE_CLIENT_X509_CERT_URL || "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-t6bfk%40exodus-c5202.iam.gserviceaccount.com",
+  universe_domain: "googleapis.com"
 };
 
-// Inicializar Firebase Admin
-admin.initializeApp({
-  credential: admin.credential.cert(firebaseConfig),
-  storageBucket: process.env.FIRE_STORAGE_BUCKET,
-  databaseURL: `https://${process.env.FIRE_PROJECT_ID}.firebaseio.com`
-});
+
+try {
+  admin.initializeApp({
+    credential: admin.credential.cert(firebaseConfig),
+    storageBucket: process.env.FIRE_STORAGE_BUCKET || process.env.FIREBASE_STORAGE_BUCKET,
+    databaseURL: `https://${process.env.FIREBASE_PROJECT_ID}-default-rtdb.firebaseio.com`
+  });
+  
+  console.log('Firebase Admin initialized successfully');
+} catch (error) {
+  console.error('Error initializing Firebase Admin:', error);
+  throw error;
+}
 
 const db = admin.firestore();
 const auth = admin.auth();
 db.settings({ ignoreUndefinedProperties: true });
+
 
 module.exports = { db, auth, admin };

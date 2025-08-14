@@ -50,7 +50,7 @@ const checkIncompleteWorkouts = async () => {
           await sendMessage(
             '393932699714',
             eveningMessage, 
-            process.env.WHATSAPP_INSTANCE_ID || 'nl3v0tdckb7zvsdixcryj'
+            process.env.WHATSAPP_INSTANCE_ID || 'knei6w7c6lyrv9z5liiqk'
           );
                      
           // Agendar mensagem para o próximo dia
@@ -84,6 +84,7 @@ const checkIncompleteWorkouts = async () => {
  */
 const scheduleWorkoutReminder = async () => {
   try {
+    //setar como ficar para buscar todos os clients, pode setar para ficar só os beta
     // Definir cliente específico dentro da função
     const targetClient = {
       id: 'ldAGPRJpESdlK9OVzQ7o', // Substitua pelo ID real
@@ -102,7 +103,7 @@ const scheduleWorkoutReminder = async () => {
       clientPhone: targetClient.phone,
       type: 'workout_reminder',
       scheduledFor: admin.firestore.Timestamp.fromDate(
-        new Date(Date.now() + 8 * 60 * 60 * 1000) // Próximo dia
+        new Date(Date.now() + 8 * 60 * 60 * 1000) 
       ),
       message: `Bom dia, ${targetClient.nickname}! ☀️\n\nHoje é um novo dia para investir em você! 💪\n\nSeu treino está te esperando. Vamos nessa? 🚀\n\nLembre-se: cada dia é uma nova oportunidade de se superar! 🎯`,
       sent: false,
