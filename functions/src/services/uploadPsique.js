@@ -47,41 +47,71 @@ async function processCSV(filePath) {
   };
 
   // Função para extrair a resposta e convertê-la para o valor padrão
-  const extractResponseValue = (response) => {
+  const extractResponseValue = (response, questionNumber) => {
     if (!response || typeof response !== 'string') {
-      return 'quase nunca'; // Valor padrão
+      // Valores padrão diferentes por escala
+      return questionNumber <= 10 ? 'às vezes' : 'alguns dias';
     }
 
     const trimmed = response.toLowerCase().trim();
     
-    // Mapeia as possíveis variações de resposta
-    if (trimmed.includes('quase nunca') || trimmed.includes('nunca')) {
-      return 'quase nunca';
-    } else if (trimmed.includes('poucas vezes') || trimmed.includes('raramente')) {
-      return 'poucas vezes';
-    } else if (trimmed.includes('às vezes') || trimmed.includes('algumas vezes')) {
-      return 'às vezes';
-    } else if (trimmed.includes('bastante vezes') || trimmed.includes('frequentemente')) {
-      return 'bastante vezes';
-    } else if (trimmed.includes('muitas vezes') || trimmed.includes('sempre')) {
-      return 'muitas vezes';
-    }
+    // Para perguntas 1-10 (Escala de Estresse Percebido)
+    if (questionNumber <= 10) {
+      if (trimmed.includes('quase nunca') || trimmed.includes('nunca')) {
+        return 'quase nunca';
+      } else if (trimmed.includes('poucas vezes') || trimmed.includes('raramente')) {
+        return 'poucas vezes';
+      } else if (trimmed.includes('às vezes') || trimmed.includes('algumas vezes')) {
+        return 'às vezes';
+      } else if (trimmed.includes('bastante vezes') || trimmed.includes('frequentemente')) {
+        return 'bastante vezes';
+      } else if (trimmed.includes('muitas vezes') || trimmed.includes('sempre')) {
+        return 'muitas vezes';
+      }
 
-    // Fallback: tenta identificar por números ou letras
-    if (trimmed.includes('1') || trimmed.startsWith('a)')) {
-      return 'quase nunca';
-    } else if (trimmed.includes('2') || trimmed.startsWith('b)')) {
-      return 'poucas vezes';
-    } else if (trimmed.includes('3') || trimmed.startsWith('c)')) {
-      return 'às vezes';
-    } else if (trimmed.includes('4') || trimmed.startsWith('d)')) {
-      return 'bastante vezes';
-    } else if (trimmed.includes('5') || trimmed.startsWith('e)')) {
-      return 'muitas vezes';
-    }
+      // Fallback para perguntas 1-10: tenta identificar por números ou letras
+      if (trimmed.includes('1') || trimmed.startsWith('a)')) {
+        return 'quase nunca';
+      } else if (trimmed.includes('2') || trimmed.startsWith('b)')) {
+        return 'poucas vezes';
+      } else if (trimmed.includes('3') || trimmed.startsWith('c)')) {
+        return 'às vezes';
+      } else if (trimmed.includes('4') || trimmed.startsWith('d)')) {
+        return 'bastante vezes';
+      } else if (trimmed.includes('5') || trimmed.startsWith('e)')) {
+        return 'muitas vezes';
+      }
 
-    console.warn(`Não foi possível identificar a resposta: "${response}"`);
-    return 'às vezes'; // Valor padrão médio
+      console.warn(`[Q${questionNumber}] Não foi possível identificar a resposta: "${response}"`);
+      return 'às vezes'; // Valor padrão médio para escala de estresse
+    }
+    
+    // Para perguntas 11-26 (Escalas de Ansiedade e Depressão)
+    else {
+      if (trimmed.includes('nunca') || trimmed.includes('nenhuma vez')) {
+        return 'nunca';
+      } else if (trimmed.includes('alguns dias') || trimmed.includes('várias vezes') || trimmed.includes('poucas vezes')) {
+        return 'alguns dias';
+      } else if (trimmed.includes('mais da metade dos dias') || trimmed.includes('maioria dos dias') || trimmed.includes('metade')) {
+        return 'mais da metade dos dias';
+      } else if (trimmed.includes('quase todos os dias') || trimmed.includes('todos os dias') || trimmed.includes('sempre')) {
+        return 'quase todos os dias';
+      }
+
+      // Fallback para perguntas 11-26: tenta identificar por números ou letras
+      if (trimmed.includes('0') || trimmed.includes('1') || trimmed.startsWith('a)')) {
+        return 'nunca';
+      } else if (trimmed.includes('1') || trimmed.includes('2') || trimmed.startsWith('b)')) {
+        return 'alguns dias';
+      } else if (trimmed.includes('2') || trimmed.includes('3') || trimmed.startsWith('c)')) {
+        return 'mais da metade dos dias';
+      } else if (trimmed.includes('3') || trimmed.includes('4') || trimmed.startsWith('d)')) {
+        return 'quase todos os dias';
+      }
+
+      console.warn(`[Q${questionNumber}] Não foi possível identificar a resposta: "${response}"`);
+      return 'alguns dias'; // Valor padrão baixo para escalas de ansiedade/depressão
+    }
   };
 
   fs.createReadStream(filePath)
@@ -121,16 +151,18 @@ async function processCSV(filePath) {
 
         questions.forEach((question) => {
           const fieldName = fieldMapping[question];
-          const answer = row[question] || "às vezes"; // Valor padrão médio
+          const answer = row[question] || (fieldName && parseInt(fieldName.replace('q', '')) <= 10 ? "às vezes" : "alguns dias");
 
           if (fieldName) {
-            // Converte a resposta para o formato padronizado
-            responses[fieldName] = extractResponseValue(answer);
+            // Pega o número da pergunta para determinar a escala
+            const questionNumber = parseInt(fieldName.replace('q', ''));
+            // Converte a resposta para o formato padronizado baseado na escala
+            responses[fieldName] = extractResponseValue(answer, questionNumber);
           } else {
             // Se não encontrar mapeamento, tenta criar um baseado na posição
             const questionIndex = questions.indexOf(question) + 1;
             if (questionIndex <= 26) {
-              responses[`q${questionIndex}`] = extractResponseValue(answer);
+              responses[`q${questionIndex}`] = extractResponseValue(answer, questionIndex);
             }
           }
 
@@ -141,7 +173,12 @@ async function processCSV(filePath) {
         // Debug: mostra as primeiras conversões para verificar
         if (processedCount < 3) {
           console.log(`\nExample conversion for ${email}:`);
-          Object.keys(responses).slice(0, 5).forEach(key => {
+          console.log('Estresse (q1-q10):');
+          Object.keys(responses).filter(k => parseInt(k.replace('q', '')) <= 10).slice(0, 3).forEach(key => {
+            console.log(`${key}: ${responses[key]}`);
+          });
+          console.log('Ansiedade/Depressão (q11-q26):');
+          Object.keys(responses).filter(k => parseInt(k.replace('q', '')) > 10).slice(0, 3).forEach(key => {
             console.log(`${key}: ${responses[key]}`);
           });
         }
@@ -231,20 +268,31 @@ async function processCSV(filePath) {
       }
       
       console.log('\nEstrutura das dimensões psicológicas:');
-      console.log('- Estresse Percebido: q1 a q10');
-      console.log('- Ansiedade Generalizada: q11 a q17');  
-      console.log('- Sintomas Depressivos: q18 a q26');
+      console.log('- Estresse Percebido (q1-q10): quase nunca | poucas vezes | às vezes | bastante vezes | muitas vezes');
+      console.log('- Ansiedade Generalizada (q11-q17): nunca | alguns dias | mais da metade dos dias | quase todos os dias');  
+      console.log('- Sintomas Depressivos (q18-q26): nunca | alguns dias | mais da metade dos dias | quase todos os dias');
       
       console.log('\nExemplo de responses salvo:');
       if (rows.length > 0) {
         const sampleRow = rows[0];
         const sampleResponses = {};
-        questions.slice(0, 5).forEach((question) => {
+        
+        // Mostra exemplos de cada escala
+        questions.slice(0, 2).forEach((question) => {
           const fieldName = fieldMapping[question];
           if (fieldName) {
-            sampleResponses[fieldName] = extractResponseValue(sampleRow[question]);
+            const questionNumber = parseInt(fieldName.replace('q', ''));
+            sampleResponses[fieldName] = extractResponseValue(sampleRow[question], questionNumber);
           }
         });
+        
+        // Adiciona exemplo da escala de ansiedade/depressão
+        const anxietyQuestion = questions.find(q => fieldMapping[q] && fieldMapping[q].includes('11'));
+        if (anxietyQuestion) {
+          const fieldName = fieldMapping[anxietyQuestion];
+          sampleResponses[fieldName] = extractResponseValue(sampleRow[anxietyQuestion], 11);
+        }
+        
         console.log(JSON.stringify(sampleResponses, null, 2));
       }
     });

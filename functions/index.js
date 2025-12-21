@@ -10,19 +10,30 @@ const { checkIncompleteWorkouts } = require('./src/services/eveningService');
 const { sendScheduledReminders, cleanupOldReminders } = require('./src/services/morningService');
 
 // Configuração do CORS mais robusta
+// Configuração CORS mais robusta
 const cors = require("cors")({
-  origin: [
-    "https://exodus-c5202.web.app",
-    "https://exodus-c5202.firebaseapp.com",
-    "http://localhost:5173",
-    "http://localhost:3000"
-  ],
+  origin: function (origin, callback) {
+    // Permite requisições sem origin (mobile apps, Postman, etc.)
+    if (!origin) return callback(null, true);
+    
+    const allowedOrigins = [
+      "https://exodus-c5202.web.app",
+      "https://exodus-c5202.firebaseapp.com",
+      "http://localhost:5173",
+      "http://localhost:3000"
+    ];
+    
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'X-Requested-With'],
   optionsSuccessStatus: 200
 });
-
 // Inicializar o Firebase Admin SDK
 // Carregar variáveis de ambiente do arquivo .env
 dotenv.config({ path: resolve(__dirname, '.env') });
@@ -39,11 +50,11 @@ exports.dailyMessageScheduler = functions
     const start = Date.now();
     console.log('Scheduled function is running...');
     
-    await sendMessage('393932699714', 'juan, os agendamentos dos disparos estão se iniciando agora...', 'knei6w7c6lyrv9z5liiqk');
+    //await sendMessage('393932699714', 'juan, os agendamentos dos disparos estão se iniciando agora...', 'knei6w7c6lyrv9z5liiqk');
 
-    await main();
+    //await main();
 
-    await sendMessage('393932699714', 'juan, os agendamentos dos disparos foram encerrados...', 'knei6w7c6lyrv9z5liiqk');
+    //await sendMessage('393932699714', 'juan, os agendamentos dos disparos foram encerrados...', 'knei6w7c6lyrv9z5liiqk');
 
     const end = Date.now();
     const executionTime = (end - start) / 1000;

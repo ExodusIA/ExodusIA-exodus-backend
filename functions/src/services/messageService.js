@@ -1,36 +1,51 @@
 const axios = require('axios');
 
-const sendMessage = async (phoneNumber, message, instanceId) => {
-  try {    
-    const url = "https://api.zapsterapi.com/v1/wa/messages";
+const API_URL = "https://api.zapsterapi.com/v1/wa/messages";
+const API_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE3MjgxNjA1ODMsImlzcyI6InphcHN0ZXJhcGkiLCJzdWIiOiJmNTM3MzIxYS05NDg4LTRjZWItOTcwOC1jZmE2ODkwN2I3NmYiLCJqdGkiOiI2MGUwM2MyMy04YTgwLTRjNTAtOTU1NC02ZWU5ODJjZWRmZjAifQ.LGb9vPKOxN3W9Ke8DxTweEaGFfApKhll5666c62L9RU";
 
-    const options = {
-      headers: {
-        Authorization: 'Bearer ' + "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE3MjgxNjA1ODMsImlzcyI6InphcHN0ZXJhcGkiLCJzdWIiOiJmNTM3MzIxYS05NDg4LTRjZWItOTcwOC1jZmE2ODkwN2I3NmYiLCJqdGkiOiI2MGUwM2MyMy04YTgwLTRjNTAtOTU1NC02ZWU5ODJjZWRmZjAifQ.LGb9vPKOxN3W9Ke8DxTweEaGFfApKhll5666c62L9RU",
-        'X-Instance-ID': instanceId,
-        'Content-Type': 'application/json'
-      }
+const sendMessage = async (phoneNumber, message, instanceId, buttons = null) => {
+  try {
+    const headers = {
+      Authorization: `Bearer ${API_TOKEN}`,
+      'X-Instance-ID': instanceId,
+      'Content-Type': 'application/json'
     };
 
     const body = {
-      instance_id: instanceId,
-      text: message,
       recipient: phoneNumber,
+      text: message,
     };
 
-    const response = await axios.post(url, body, options);
-    console.log('Mensagem enviada com sucesso:', response.data);
+    // se houver botões, adiciona no corpo da requisição
+    if (buttons && buttons.length > 0) {
+      body.buttons = buttons;
+      body.buttons_mode = "interactive"; // obrigatório para botões
+    }
+
+    const response = await axios.post(API_URL, body, { headers });
+
+    console.log('✅ Mensagem enviada com sucesso:', response.data);
   } catch (error) {
     if (error.response) {
-      console.error('Response data:', error.response.data);
-      console.error('Response status:', error.response.status);
-      console.error('Response headers:', error.response.headers);
+      console.error('❌ Erro na API:', error.response.data);
     } else {
-      console.error('Erro ao enviar a mensagem:', error.message);
+      console.error('❌ Erro ao enviar mensagem:', error.message);
     }
   }
 };
 
-//sendMessage('393932699714', '123', 'knei6w7c6lyrv9z5liiqk')
+// 🟢 Exemplo 1: Envio de texto simples
+sendMessage('5511975809048', 'Olá, tudo bem?', 'xhnhbs8cy4wxrkkf0h1jc');
+
+// 🟢 Exemplo 2: Envio com botões interativos
+sendMessage(
+  '5511975809048',
+  'Você gosta de pizza?',
+  'xhnhbs8cy4wxrkkf0h1jc',
+  [
+    { label: 'Sim, quero!', type: 'reply' },
+    { label: 'Não, obrigado', type: 'reply' }
+  ]
+);
 
 module.exports = { sendMessage };

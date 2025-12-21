@@ -246,8 +246,8 @@ const sendScheduledReminders = async () => {
 
 /**
  * Função alternativa que busca todas as tarefas do dia e envia no horário especificado
- */
-/*const sendTasksAtSpecificTime = async (targetHour = 7) => {
+ *//*
+const sendTasksAtSpecificTime = async (targetHour = 9) => {
   console.log(`🕰️ Verificando tarefas para envio às ${targetHour}:00h...`);
   
   try {
@@ -289,7 +289,7 @@ const sendScheduledReminders = async () => {
         const tasks = await getTasksForToday([{ program: program.program, startDate: date }]);
 
         const tasksForHour = tasks.filter(task => {
-          const taskTime = task.time || '07:00';
+          const taskTime = task.time || '09:00';
           const [taskHour] = taskTime.split(':').map(Number);
           return taskHour === targetHour;
         });
@@ -378,7 +378,9 @@ const cleanupOldReminders = async () => {
     console.error('❌ Erro ao limpar lembretes antigos:', error);
   }
 };
+
 cleanupOldReminders();
+//sendTasksAtSpecificTime();
 
 module.exports = { 
   sendScheduledReminders, 
